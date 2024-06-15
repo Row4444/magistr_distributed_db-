@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres-master:
+    image: postgres:13
+    container_name: postgres-master
+    environment:
+      - POSTGRES_PASSWORD=masterpassword
+      - POSTGRES_DB=mydatabase
+      - POSTGRES_USER=masteruser
+      - REPLICATION_USER=repluser
+      - REPLICATION_PASSWORD=replpassword
+    volumes:
+      - ./.postgres-master-data:/var/lib/postgresql/data
+      - ./scripts/master-init.sql:/docker-entrypoint-initdb.d/master-init.sql
+      - ./scripts/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./scripts/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
+    ports:
+      - "5432:5432"
+    networks:
+      - postgres-net
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+
+  postgres-replica:
+    build:
+      context: .
+      dockerfile: Dockerfile.replica
+    container_name: postgres-replica
+    environment:
+      - POSTGRES_PASSWORD=replicapassword
+      - POSTGRES_DB=mydatabase
+      - POSTGRES_USER=replicauser
+      - REPLICATION_USER=repluser
+      - REPLICATION_PASSWORD=replpassword
+    volumes:
+      - ./.postgres-replica-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    depends_on:
+      - postgres-master
+    networks:
+      - postgres-net
+
+volumes:
+  postgres-master-data:
+  postgres-replica-data:
+
+networks:
+  postgres-net:

@@ -1,0 +1,2 @@
+CREATE ROLE repluser WITH REPLICATION LOGIN PASSWORD 'replpassword';
+CREATE DATABASE mydatabase OWNER masteruser ENCODING 'UTF8';
